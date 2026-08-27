@@ -44,6 +44,15 @@ jobs:
           mv AppData/AppData.mm.generated AppData/AppData.mm
           ! grep -q 'HBLogDebug' AppData/AppData.mm
 
+      - name: Disable MonkeyDev device deployment in CI
+        run: |
+          set -euo pipefail
+          PBX='AppData.xcodeproj/project.pbxproj'
+          grep -q '/opt/MonkeyDev/bin/md --xcbp' "$PBX"
+          sed -i '' 's#/opt/MonkeyDev/bin/md --xcbp\\n#echo CI_SKIP_MONKEYDEV_DEVICE_DEPLOYMENT\\n#' "$PBX"
+          ! grep -q '/opt/MonkeyDev/bin/md --xcbp' "$PBX"
+          grep -q 'CI_SKIP_MONKEYDEV_DEVICE_DEPLOYMENT' "$PBX"
+
       - name: Compile AppData and Preferences
         run: |
           export PATH="/opt/theos/bin:/opt/MonkeyDev/bin:$PATH"

@@ -1,0 +1,53 @@
+name: Build AppData 2.6.9 Arabic Wrapper
+
+on:
+  push:
+    branches:
+      - appdata-269-arabic-overlay
+    paths:
+      - 'AppData269ArabicWrapper/**'
+      - '.github/workflows/build-269-wrapper.yml'
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build wrapper bundle executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          mkdir -p wrapper-output
+          xcrun clang \
+            -arch arm64 -arch arm64e \
+            -isysroot "$SDK" \
+            -miphoneos-version-min=15.0 \
+            -fobjc-arc \
+            -fblocks \
+            -bundle \
+            -framework Foundation \
+            -framework UIKit \
+            AppData269ArabicWrapper/Wrapper.m \
+            -o wrapper-output/AppDataPrefs
+          codesign --force --sign - wrapper-output/AppDataPrefs || true
+          file wrapper-output/AppDataPrefs
+
+      - name: Verify wrapper
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f wrapper-output/AppDataPrefs
+          file wrapper-output/AppDataPrefs | grep -q 'Mach-O universal binary'
+          strings wrapper-output/AppDataPrefs | grep -q 'AppDataPrefsOriginal'
+          strings wrapper-output/AppDataPrefs | grep -q 'ADSelectListTableViewController'
+          strings wrapper-output/AppDataPrefs | grep -q 'العربية'
+
+      - name: Upload wrapper
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppData-2.6.9-Arabic-Wrapper-ar3
+          path: wrapper-output/AppDataPrefs
+          if-no-files-found: error

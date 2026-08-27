@@ -9,7 +9,6 @@
 %property (nonatomic, retain) UISwipeGestureRecognizer *adSwipeGestureRecognizer;
 
 - (SBIconImageView *)initWithFrame:(CGRect)arg1 {
-    %log;
     SBIconImageView *r = %orig;
     if (![r isKindOfClass:NSClassFromString(@"SBFolderIconImageView")]
         && [r respondsToSelector:@selector(setAdSwipeGestureRecognizer:)]) {

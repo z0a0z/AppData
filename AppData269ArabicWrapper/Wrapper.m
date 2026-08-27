@@ -3,6 +3,7 @@
 #import <objc/runtime.h>
 #import <dlfcn.h>
 
+// AppData 2.6.9 Arabic wrapper ar3
 static NSString * const ADPrefsPath = @"/var/mobile/Library/Preferences/com.fouadraheb.appdata.plist";
 static NSString * const ADMapPath = @"/var/jb/Library/Application Support/AppDataArabic/ar.plist";
 
@@ -57,7 +58,6 @@ static BOOL ADClassIsOurs(Class cls) {
     return [n hasPrefix:@"AD"];
 }
 
-// ---- Language selector initializer ----
 typedef id (*ADSelectInitIMP)(id, SEL, UITableViewStyle, NSString *, NSArray *, NSArray *, NSString *, BOOL, void (^)(id));
 static ADSelectInitIMP gSelectInit;
 
@@ -77,7 +77,6 @@ static id ADSelectInit(id self, SEL _cmd, UITableViewStyle style, NSString *titl
     return gSelectInit(self, _cmd, style, title, items, values, currentValue, pop, changeBlock);
 }
 
-// ---- Translate AD view controllers after rendering ----
 typedef void (*ADViewDidAppearIMP)(id, SEL, BOOL);
 static NSMutableDictionary<NSString *, NSValue *> *gOriginalViewDidAppear;
 
@@ -117,12 +116,9 @@ static void ADInstallControllerTranslation(void) {
 
 __attribute__((constructor)) static void ADWrapperLoad(void) {
     @autoreleasepool {
-        NSString *bundlePath = [[NSBundle bundleForClass:NSClassFromString(@"NSBundle")] bundlePath];
-        // bundleForClass above can point at Preferences; use the known AppData bundle path first.
         NSString *origPath = @"/var/jb/Library/PreferenceBundles/AppDataPrefs.bundle/AppDataPrefsOriginal";
         void *h = dlopen(origPath.UTF8String, RTLD_NOW | RTLD_GLOBAL);
         if (!h) {
-            // Fallback for environments where /var/jb is symlinked/resolved differently.
             origPath = @"/Library/PreferenceBundles/AppDataPrefs.bundle/AppDataPrefsOriginal";
             h = dlopen(origPath.UTF8String, RTLD_NOW | RTLD_GLOBAL);
         }

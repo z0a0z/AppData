@@ -1,0 +1,38 @@
+name: Build AppData DEB
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-13
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Theos
+        uses: theos/action-setup-theos@master
+
+      - name: Setup iOS SDK
+        run: |
+          git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/theos/sdks.git $THEOS/sdks
+          cd $THEOS/sdks
+          git sparse-checkout set --no-cone iPhoneOS14.5.sdk
+          git checkout
+          cd -
+
+      - name: Build Package
+        run: |
+          make clean
+          make package FINALPACKAGE=1
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppData-Deb
+          path: packages/*.deb

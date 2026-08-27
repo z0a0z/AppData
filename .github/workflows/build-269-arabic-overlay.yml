@@ -1,8 +1,8 @@
-name: Build AppData 2.6.9 Arabic Overlay
+name: Build AppData 2.7.1 Arabic Overlay
 
 on:
   push:
-    branches: [ appdata-269-arabic-overlay ]
+    branches: [ appdata-271-arabic ]
   workflow_dispatch:
 
 jobs:
@@ -21,9 +21,9 @@ jobs:
       - name: Validate localization resources
         run: |
           plutil -lint AppData269Arabic/ar.plist
-          grep -q 'العربية' AppData269Arabic/Tweak.xm
+          grep -q 'العربية' AppData269Arabic/ar.plist
           grep -q 'UISemanticContentAttributeForceRightToLeft' AppData269Arabic/Tweak.xm
-          grep -q 'ADLanguage' AppData269Arabic/Tweak.xm
+          grep -q 'ADArabicEnabled' AppData269Arabic/Tweak.xm
 
       - name: Build localization overlay
         env:
@@ -49,11 +49,11 @@ jobs:
           otool -L overlay-output/AppDataArabic.dylib
           test -s overlay-output/AppDataArabic.plist
           test -s overlay-output/ar.plist
-          echo APPDATA_269_ARABIC_OVERLAY_PASS
+          echo APPDATA_271_ARABIC_OVERLAY_PASS
 
       - name: Upload overlay
         uses: actions/upload-artifact@v4
         with:
-          name: AppData-2.6.9-Arabic-Overlay
+          name: AppData-2.7.1-Arabic-Overlay
           path: overlay-output/
           if-no-files-found: error

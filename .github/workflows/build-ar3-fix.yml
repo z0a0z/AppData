@@ -1,0 +1,62 @@
+name: Build AppData Arabic ar3 Fix
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'ArabicFix/**'
+      - '.github/workflows/build-ar3-fix.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ldid
+        run: brew install ldid
+
+      - name: Build arm64 + arm64e dylib
+        run: |
+          set -euo pipefail
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          mkdir -p ArabicFix/build
+          xcrun --sdk iphoneos clang \
+            -isysroot "$SDK" \
+            -miphoneos-version-min=15.0 \
+            -arch arm64 -arch arm64e \
+            -fobjc-arc -fmodules \
+            -dynamiclib \
+            -framework Foundation -framework UIKit \
+            -install_name '@rpath/AppDataArabicFix.dylib' \
+            ArabicFix/AppDataArabicFix.m \
+            -o ArabicFix/build/AppDataArabicFix.dylib
+          ldid -S ArabicFix/build/AppDataArabicFix.dylib
+          file ArabicFix/build/AppDataArabicFix.dylib
+          shasum -a 256 ArabicFix/build/AppDataArabicFix.dylib > ArabicFix/build/SHA256.txt
+
+      - name: Create injection filter
+        run: |
+          cat > ArabicFix/build/AppDataArabicFix.plist <<'EOF'
+          {
+              Filter = {
+                  Bundles = (
+                      "com.apple.Preferences"
+                  );
+                  Executables = (
+                      "Preferences"
+                  );
+              };
+          }
+          EOF
+
+      - name: Upload fix artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppData-Arabic-ar3-Fix
+          path: |
+            ArabicFix/build/AppDataArabicFix.dylib
+            ArabicFix/build/AppDataArabicFix.plist
+            ArabicFix/build/SHA256.txt

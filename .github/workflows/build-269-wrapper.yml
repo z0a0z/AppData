@@ -1,9 +1,9 @@
-name: Build AppData 2.6.9 Arabic Wrapper
+name: Build AppData 2.7.1 Arabic Wrapper
 
 on:
   push:
     branches:
-      - appdata-269-arabic-overlay
+      - appdata-271-arabic
     paths:
       - 'AppData269ArabicWrapper/**'
       - '.github/workflows/build-269-wrapper.yml'
@@ -43,11 +43,11 @@ jobs:
           file wrapper-output/AppDataPrefs | grep -q 'Mach-O universal binary'
           strings wrapper-output/AppDataPrefs | grep -q 'AppDataPrefsOriginal'
           strings wrapper-output/AppDataPrefs | grep -q 'ADSelectListTableViewController'
-          strings wrapper-output/AppDataPrefs | grep -q 'ADLanguage'
+          strings wrapper-output/AppDataPrefs | grep -q 'ADArabicEnabled'
 
       - name: Upload wrapper
         uses: actions/upload-artifact@v4
         with:
-          name: AppData-2.6.9-Arabic-Wrapper-ar3
+          name: AppData-2.7.1-Arabic-Wrapper
           path: wrapper-output/AppDataPrefs
           if-no-files-found: error

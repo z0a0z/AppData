@@ -5,9 +5,6 @@ on:
     branches: [ master, main ]
   workflow_dispatch:
 
-env:
-  THEOS: /tmp/theos
-
 jobs:
   build:
     runs-on: macos-14
@@ -18,27 +15,59 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Theos
+      - name: Install Build Tools
         run: |
-          git clone --recursive https://github.com/theos/theos.git "$THEOS"
+          brew install dpkg ldid
 
-      - name: Setup iOS SDK
+      - name: Compile Xcode Project
         run: |
-          curl -LO https://github.com/theos/sdks/archive/master.zip
-          unzip -q master.zip
-          mkdir -p "$THEOS/sdks"
-          cp -r sdks-master/iPhoneOS*.sdk "$THEOS/sdks/"
-          rm -rf master.zip sdks-master
+          xcodebuild clean build \
+            -project AppData.xcodeproj \
+            -alltargets \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
 
-      - name: Build Rootless Package (Dopamine / iOS 15+)
+      - name: Package Rootful DEB
         run: |
-          make clean
-          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+          mkdir -p packages
+          mkdir -p stage-rootful/DEBIAN
+          mkdir -p stage-rootful/Library/MobileSubstrate/DynamicLibraries
+          mkdir -p stage-rootful/Library/PreferenceBundles
 
-      - name: Build Rootful Package (Legacy)
+          # نسخ معلومات الحزمة الأساسية
+          cp -r PackageInfo/* stage-rootful/DEBIAN/
+
+          # تجميع ملفات الأداة المبنية
+          find build/Build/Products/Release-iphoneos -name "*.dylib" -exec cp {} stage-rootful/Library/MobileSubstrate/DynamicLibraries/ \;
+          find build/Build/Products/Release-iphoneos -name "*.plist" -exec cp {} stage-rootful/Library/MobileSubstrate/DynamicLibraries/ \;
+          find build/Build/Products/Release-iphoneos -name "*.bundle" -exec cp -r {} stage-rootful/Library/PreferenceBundles/ \;
+
+          # توقيع وتجميع الـ deb
+          find stage-rootful -name "*.dylib" -exec ldid -S {} \;
+          dpkg-deb -b -Zgzip stage-rootful packages/com.fouadraheb.appdata_rootful.deb
+
+      - name: Package Rootless DEB (iOS 15+)
         run: |
-          make clean
-          make package FINALPACKAGE=1
+          mkdir -p stage-rootless/DEBIAN
+          mkdir -p stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries
+          mkdir -p stage-rootless/var/jb/Library/PreferenceBundles
+
+          # نسخ وتعديل المعمارية إلى arm64
+          cp -r PackageInfo/* stage-rootless/DEBIAN/
+          sed -i '' 's/iphoneos-arm/iphoneos-arm64/g' stage-rootless/DEBIAN/control
+
+          # تجميع ملفات الأداة للـ Rootless
+          find build/Build/Products/Release-iphoneos -name "*.dylib" -exec cp {} stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/ \;
+          find build/Build/Products/Release-iphoneos -name "*.plist" -exec cp {} stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/ \;
+          find build/Build/Products/Release-iphoneos -name "*.bundle" -exec cp -r {} stage-rootless/var/jb/Library/PreferenceBundles/ \;
+
+          # توقيع وتجميع الـ deb
+          find stage-rootless -name "*.dylib" -exec ldid -S {} \;
+          dpkg-deb -b -Zgzip stage-rootless packages/com.fouadraheb.appdata_rootless.deb
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4

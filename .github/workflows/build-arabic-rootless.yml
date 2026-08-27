@@ -5,65 +5,145 @@ on:
     branches: [ chatgpt-arabic-rootless ]
   workflow_dispatch:
 
+env:
+  THEOS: /opt/theos
+  MonkeyDevPath: /opt/MonkeyDev
+
 jobs:
   build:
     runs-on: macos-14
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout clean branch
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
       - name: Install build dependencies
         run: |
           brew install dpkg ldid
-          sudo git clone --recursive https://github.com/theos/theos.git /opt/theos
-          sudo git clone --recursive https://github.com/AloneMonkey/MonkeyDev.git /opt/MonkeyDev
-          sudo chmod -R 777 /opt/theos /opt/MonkeyDev
-      - name: Generate Logos source and compile
+          sudo git clone --depth 1 --recursive https://github.com/theos/theos.git /opt/theos
+          sudo git clone --depth 1 --recursive https://github.com/AloneMonkey/MonkeyDev.git /opt/MonkeyDev
+          sudo chmod -R a+rX,u+w /opt/theos /opt/MonkeyDev
+
+      - name: Apply audited Arabic RTL rootless preparation
         run: |
-          set -euo pipefail
-          export THEOS=/opt/theos
-          export MonkeyDevPath=/opt/MonkeyDev
-          export PATH="$THEOS/bin:$MonkeyDevPath/bin:$PATH"
-          "$THEOS/bin/logos.pl" AppData/AppData.xm > AppData/AppData.mm.generated
+          python3 tools/prepare_arabic_rootless.py
+          grep -q 'UISemanticContentAttributeForceRightToLeft' AppData/Classes/Controller/ADDataViewController.m
+          grep -q '/var/jb/Library/Application Support/AppData/Resources.bundle' AppData/Classes/Helpers/ADHelper.m
+
+      - name: Regenerate Logos source
+        run: |
+          export PATH="/opt/theos/bin:$PATH"
+          /opt/theos/bin/logos.pl AppData/AppData.xm > AppData/AppData.mm.generated
+          test -s AppData/AppData.mm.generated
           mv AppData/AppData.mm.generated AppData/AppData.mm
+          ! grep -q 'HBLogDebug' AppData/AppData.mm
+
+      - name: Compile AppData and Preferences
+        run: |
+          export PATH="/opt/theos/bin:/opt/MonkeyDev/bin:$PATH"
           xcodebuild clean build \
             -project AppData.xcodeproj \
             -alltargets \
             -configuration Release \
             -sdk iphoneos \
-            IPHONEOS_DEPLOYMENT_TARGET=12.0 \
-            SYMROOT="$PWD/build" \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+            ARCHS="arm64 arm64e" \
+            ONLY_ACTIVE_ARCH=NO \
+            SYMROOT="$(pwd)/build" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
-      - name: Package rootless DEB
+
+      - name: Locate build products
         run: |
           set -euo pipefail
-          ROOT="$PWD/stage-rootless"
-          mkdir -p "$ROOT/DEBIAN"
-          mkdir -p "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries"
-          mkdir -p "$ROOT/var/jb/Library/PreferenceBundles"
-          mkdir -p "$ROOT/var/jb/Library/PreferenceLoader/Preferences"
-          mkdir -p "$ROOT/var/jb/Library/Application Support/AppData"
-          cp AppData/Package/DEBIAN/control "$ROOT/DEBIAN/control"
-          sed -i '' 's/^Architecture:.*/Architecture: iphoneos-arm64/' "$ROOT/DEBIAN/control"
-          DYLIB="$(find build -type f -name 'AppData.dylib' | head -n1)"
-          test -n "$DYLIB"
-          cp "$DYLIB" "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib"
-          cp AppData/Package/Library/MobileSubstrate/DynamicLibraries/AppData.plist "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.plist"
-          if [ -d "AppData/Package/Library/Application Support/AppData/Resources.bundle" ]; then
-            cp -R "AppData/Package/Library/Application Support/AppData/Resources.bundle" "$ROOT/var/jb/Library/Application Support/AppData/"
+          DYLIB="$(find build -type f -name 'AppData.dylib' | head -1)"
+          PREF_BUNDLE="$(find build -type d -name 'AppDataPrefs.bundle' | head -1)"
+          test -n "$DYLIB" && test -f "$DYLIB"
+          test -n "$PREF_BUNDLE" && test -d "$PREF_BUNDLE"
+          test -f "$PREF_BUNDLE/AppDataPrefs"
+          echo "DYLIB=$DYLIB" >> "$GITHUB_ENV"
+          echo "PREF_BUNDLE=$PREF_BUNDLE" >> "$GITHUB_ENV"
+          file "$DYLIB"
+          file "$PREF_BUNDLE/AppDataPrefs"
+
+      - name: Normalize rootless framework linkage
+        run: |
+          set -euo pipefail
+          echo 'Before:'
+          otool -L "$DYLIB"
+          if otool -L "$DYLIB" | grep -q '/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate'; then
+            install_name_tool -change \
+              /Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate \
+              @rpath/CydiaSubstrate.framework/CydiaSubstrate \
+              "$DYLIB"
           fi
-          PREF_BUNDLE="$(find build -type d -name 'AppDataPrefs.bundle' | head -n1 || true)"
-          if [ -n "$PREF_BUNDLE" ]; then cp -R "$PREF_BUNDLE" "$ROOT/var/jb/Library/PreferenceBundles/"; fi
-          if [ -f AppDataPrefs/Package/Library/PreferenceLoader/Preferences/AppData.plist ]; then
-            cp AppDataPrefs/Package/Library/PreferenceLoader/Preferences/AppData.plist "$ROOT/var/jb/Library/PreferenceLoader/Preferences/AppData.plist"
+          if ! otool -l "$DYLIB" | grep -A2 LC_RPATH | grep -q '/var/jb/Library/Frameworks'; then
+            install_name_tool -add_rpath /var/jb/Library/Frameworks "$DYLIB"
           fi
-          ldid -S "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib"
-          find "$ROOT/var/jb/Library/PreferenceBundles" -type f -perm +111 -exec ldid -S {} \; || true
-          mkdir -p packages
-          dpkg-deb -b -Zgzip "$ROOT" packages/com.fouadraheb.appdata_1.3.6_arabic_rootless_iphoneos-arm64.deb
-          dpkg-deb -I packages/*.deb
-          dpkg-deb -c packages/*.deb
-      - uses: actions/upload-artifact@v4
+          echo 'After:'
+          otool -L "$DYLIB"
+          otool -l "$DYLIB" | grep -A2 LC_RPATH || true
+
+      - name: Build Dopamine rootless package
+        run: |
+          set -euo pipefail
+          rm -rf stage-rootless packages
+          mkdir -p stage-rootless/DEBIAN packages stage-rootless/var/jb
+
+          # Copy the complete original payload so Resources.bundle,
+          # PreferenceLoader and filter plist cannot be omitted.
+          cp -R AppData/Package/Library stage-rootless/var/jb/
+
+          # Replace historical binaries with the freshly compiled Arabic build.
+          rm -rf stage-rootless/var/jb/Library/PreferenceBundles/AppDataPrefs.bundle
+          cp -R "$PREF_BUNDLE" stage-rootless/var/jb/Library/PreferenceBundles/AppDataPrefs.bundle
+          cp "$DYLIB" stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib
+
+          cat > stage-rootless/DEBIAN/control <<'EOF'
+Package: com.fouadraheb.appdata
+Name: AppData Arabic
+Version: 1.3.6+ar.rootless1
+Description: Arabic RTL build of AppData for Dopamine rootless
+Section: Tweaks
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Architecture: iphoneos-arm64
+Author: Fouad Raheb
+Maintainer: Arabic rootless build
+Icon: file:///var/jb/Library/PreferenceBundles/AppDataPrefs.bundle/AppData@3x.png
+EOF
+
+          ldid -S stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib
+          ldid -S stage-rootless/var/jb/Library/PreferenceBundles/AppDataPrefs.bundle/AppDataPrefs
+          dpkg-deb -b -Zgzip stage-rootless packages/com.fouadraheb.appdata_1.3.6+ar.rootless1_iphoneos-arm64.deb
+
+      - name: Verify DEB contents and architecture
+        run: |
+          set -euo pipefail
+          DEB="packages/com.fouadraheb.appdata_1.3.6+ar.rootless1_iphoneos-arm64.deb"
+          test -s "$DEB"
+          dpkg-deb -I "$DEB"
+          dpkg-deb -c "$DEB" | tee package-contents.txt
+          grep -q './var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib' package-contents.txt
+          grep -q './var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.plist' package-contents.txt
+          grep -q './var/jb/Library/Application Support/AppData/Resources.bundle/' package-contents.txt
+          grep -q './var/jb/Library/PreferenceBundles/AppDataPrefs.bundle/AppDataPrefs' package-contents.txt
+          grep -q './var/jb/Library/PreferenceLoader/Preferences/AppDataPrefs.plist' package-contents.txt
+
+          rm -rf verify-root
+          mkdir verify-root
+          dpkg-deb -x "$DEB" verify-root
+          file verify-root/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib
+          lipo -info verify-root/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib
+          otool -L verify-root/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib
+          ! otool -L verify-root/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib | grep -q '^\s*/Library/Frameworks/CydiaSubstrate.framework'
+          echo ROOTLESS_DEB_VERIFICATION_PASS
+
+      - name: Upload final DEB
+        uses: actions/upload-artifact@v4
         with:
-          name: AppData-Arabic-Rootless
-          path: packages/*.deb
+          name: AppData-Arabic-Dopamine-Rootless
+          path: packages/com.fouadraheb.appdata_1.3.6+ar.rootless1_iphoneos-arm64.deb
+          if-no-files-found: error

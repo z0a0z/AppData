@@ -5,6 +5,10 @@ on:
     branches: [ master, main ]
   workflow_dispatch:
 
+env:
+  THEOS: /opt/theos
+  MonkeyDevPath: /opt/MonkeyDev
+
 jobs:
   build:
     runs-on: macos-14
@@ -15,20 +19,24 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Tools & MonkeyDev Mock
+      - name: Install System Dependencies
         run: |
           brew install dpkg ldid
-          
-          # إنشاء بيئة وهمية لـ MonkeyDev لتخطي سكربتات Xcode
-          sudo mkdir -p /opt/MonkeyDev/bin
-          sudo tee /opt/MonkeyDev/bin/md > /dev/null << 'EOF'
-          #!/bin/bash
-          exit 0
-          EOF
-          sudo chmod +x /opt/MonkeyDev/bin/md
 
-      - name: Compile Project
+      - name: Install Theos & MonkeyDev Environment
         run: |
+          # تثبيت Theos
+          sudo git clone --recursive https://github.com/theos/theos.git /opt/theos
+          
+          # تثبيت MonkeyDev بالكامل لتوفير الـ Headers والـ Frameworks
+          sudo git clone --recursive https://github.com/AloneMonkey/MonkeyDev.git /opt/MonkeyDev
+          
+          # إعطاء الصلاحيات الكاملة
+          sudo chmod -R 777 /opt/theos /opt/MonkeyDev
+
+      - name: Compile Xcode Project
+        run: |
+          export PATH="/opt/theos/bin:/opt/MonkeyDev/bin:$PATH"
           xcodebuild clean build \
             -project AppData.xcodeproj \
             -alltargets \
@@ -42,11 +50,15 @@ jobs:
 
       - name: Build Rootful Package
         run: |
-          mkdir -p packages stage-rootful/DEBIAN
+          mkdir -p packages
+          mkdir -p stage-rootful/DEBIAN
           mkdir -p stage-rootful/Library/MobileSubstrate/DynamicLibraries
           mkdir -p stage-rootful/Library/PreferenceBundles
 
+          # نسخ بيانات الحزمة
           cp -r PackageInfo/* stage-rootful/DEBIAN/
+
+          # نسخ الناتج وتوقيعه
           find build -name "*.dylib" -exec cp {} stage-rootful/Library/MobileSubstrate/DynamicLibraries/ \;
           find . -maxdepth 3 -name "AppData.plist" -not -path "./build/*" -exec cp {} stage-rootful/Library/MobileSubstrate/DynamicLibraries/ \;
           find build -name "*.bundle" -exec cp -r {} stage-rootful/Library/PreferenceBundles/ \;

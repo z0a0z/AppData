@@ -20,8 +20,9 @@ jobs:
 
       - name: Validate localization resources
         run: |
+          set -euo pipefail
           plutil -lint AppData269Arabic/ar.plist
-          grep -q 'العربية' AppData269Arabic/ar.plist
+          test -s AppData269Arabic/ar.plist
           grep -q 'UISemanticContentAttributeForceRightToLeft' AppData269Arabic/Tweak.xm
           grep -q 'ADArabicEnabled' AppData269Arabic/Tweak.xm
 

@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-13
+    runs-on: macos-14
 
     steps:
       - name: Checkout Repository
@@ -20,19 +20,23 @@ jobs:
 
       - name: Setup iOS SDK
         run: |
-          git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/theos/sdks.git $THEOS/sdks
-          cd $THEOS/sdks
-          git sparse-checkout set --no-cone iPhoneOS14.5.sdk
-          git checkout
-          cd -
+          mkdir -p $THEOS/sdks
+          curl -LO https://github.com/theos/sdks/archive/master.zip
+          unzip -q master.zip
+          cp -r sdks-master/iPhoneOS14.5.sdk $THEOS/sdks/ 2>/dev/null || cp -r sdks-master/iPhoneOS*.sdk $THEOS/sdks/
+          rm -rf master.zip sdks-master
 
-      - name: Build Package
+      - name: Build Rootless Package (Dopamine / iOS 15+)
         run: |
           make clean
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+
+      - name: Build Rootful Package (Legacy)
+        run: |
           make package FINALPACKAGE=1
 
-      - name: Upload Artifact
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: AppData-Deb
+          name: AppData-Packages
           path: packages/*.deb

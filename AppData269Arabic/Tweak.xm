@@ -61,32 +61,67 @@ static void ADRTL(UIView *v) {
 @end
 
 %hook UILabel
-- (void)setText:(NSString *)text { NSString *t = ADT(text); %orig(t); if (![t isEqual:text]) ADRTL(self); }
+- (void)setText:(NSString *)text {
+    NSString *originalText = text;
+    text = ADT(text);
+    %orig;
+    if (![text isEqual:originalText]) ADRTL(self);
+}
 %end
 
 %hook UITextView
-- (void)setText:(NSString *)text { NSString *t = ADT(text); %orig(t); if (![t isEqual:text]) ADRTL(self); }
+- (void)setText:(NSString *)text {
+    NSString *originalText = text;
+    text = ADT(text);
+    %orig;
+    if (![text isEqual:originalText]) ADRTL(self);
+}
 %end
 
 %hook UITextField
-- (void)setText:(NSString *)text { NSString *t = ADT(text); %orig(t); if (![t isEqual:text]) ADRTL(self); }
-- (void)setPlaceholder:(NSString *)text { NSString *t = ADT(text); %orig(t); if (![t isEqual:text]) ADRTL(self); }
+- (void)setText:(NSString *)text {
+    NSString *originalText = text;
+    text = ADT(text);
+    %orig;
+    if (![text isEqual:originalText]) ADRTL(self);
+}
+- (void)setPlaceholder:(NSString *)text {
+    NSString *originalText = text;
+    text = ADT(text);
+    %orig;
+    if (![text isEqual:originalText]) ADRTL(self);
+}
 %end
 
 %hook UIButton
-- (void)setTitle:(NSString *)title forState:(UIControlState)state { NSString *t = ADT(title); %orig(t, state); if (![t isEqual:title]) ADRTL(self); }
+- (void)setTitle:(NSString *)title forState:(UIControlState)state {
+    NSString *originalTitle = title;
+    title = ADT(title);
+    %orig;
+    if (![title isEqual:originalTitle]) ADRTL(self);
+}
 %end
 
 %hook UINavigationItem
-- (void)setTitle:(NSString *)title { %orig(ADT(title)); }
+- (void)setTitle:(NSString *)title {
+    title = ADT(title);
+    %orig;
+}
 %end
 
 %hook UIAlertAction
-+ (instancetype)actionWithTitle:(NSString *)title style:(UIAlertActionStyle)style handler:(void (^)(UIAlertAction *))handler { return %orig(ADT(title), style, handler); }
++ (instancetype)actionWithTitle:(NSString *)title style:(UIAlertActionStyle)style handler:(void (^)(UIAlertAction *))handler {
+    title = ADT(title);
+    return %orig;
+}
 %end
 
 %hook UIAlertController
-+ (instancetype)alertControllerWithTitle:(NSString *)title message:(NSString *)message preferredStyle:(UIAlertControllerStyle)style { return %orig(ADT(title), ADT(message), style); }
++ (instancetype)alertControllerWithTitle:(NSString *)title message:(NSString *)message preferredStyle:(UIAlertControllerStyle)style {
+    title = ADT(title);
+    message = ADT(message);
+    return %orig;
+}
 %end
 
 %hook ADPreferencesController
@@ -106,7 +141,10 @@ static void ADRTL(UIView *v) {
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-    if ([cell.accessoryView isKindOfClass:[UISegmentedControl class]]) { [tableView deselectRowAtIndexPath:indexPath animated:YES]; return; }
+    if ([cell.accessoryView isKindOfClass:[UISegmentedControl class]]) {
+        [tableView deselectRowAtIndexPath:indexPath animated:YES];
+        return;
+    }
     %orig;
 }
 %end

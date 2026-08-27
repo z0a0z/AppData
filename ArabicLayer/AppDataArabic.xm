@@ -106,7 +106,10 @@ static void ADRTLView(UIView *view) {
 %end
 
 %hook UIViewController
-- (void)setTitle:(NSString *)title { %orig(ADArabic(title)); }
+- (void)setTitle:(NSString *)title {
+    NSString *ar = ADArabic(title);
+    %orig(ar);
+}
 - (void)viewDidLoad {
     %orig;
     NSString *name = NSStringFromClass([self class]);
@@ -115,11 +118,17 @@ static void ADRTLView(UIView *view) {
 %end
 
 %hook UINavigationItem
-- (void)setTitle:(NSString *)title { %orig(ADArabic(title)); }
+- (void)setTitle:(NSString *)title {
+    NSString *ar = ADArabic(title);
+    %orig(ar);
+}
 %end
 
 %hook UIBarButtonItem
-- (void)setTitle:(NSString *)title { %orig(ADArabic(title)); }
+- (void)setTitle:(NSString *)title {
+    NSString *ar = ADArabic(title);
+    %orig(ar);
+}
 %end
 
 %hook UISearchBar
@@ -132,24 +141,29 @@ static void ADRTLView(UIView *view) {
 
 %hook UIAlertAction
 + (instancetype)actionWithTitle:(NSString *)title style:(UIAlertActionStyle)style handler:(void (^)(UIAlertAction *action))handler {
-    return %orig(ADArabic(title), style, handler);
+    NSString *ar = ADArabic(title);
+    return %orig(ar, style, handler);
 }
 %end
 
 %hook UIAlertController
 + (instancetype)alertControllerWithTitle:(NSString *)title message:(NSString *)message preferredStyle:(UIAlertControllerStyle)preferredStyle {
-    return %orig(ADArabic(title), ADArabic(message), preferredStyle);
+    NSString *arTitle = ADArabic(title);
+    NSString *arMessage = ADArabic(message);
+    return %orig(arTitle, arMessage, preferredStyle);
 }
 %end
 
 %hook UIMenu
 + (instancetype)menuWithTitle:(NSString *)title children:(NSArray<UIMenuElement *> *)children {
-    return %orig(ADArabic(title), children);
+    NSString *ar = ADArabic(title);
+    return %orig(ar, children);
 }
 %end
 
 %hook UIAction
 + (instancetype)actionWithTitle:(NSString *)title image:(UIImage *)image identifier:(UIActionIdentifier)identifier handler:(UIActionHandler)handler {
-    return %orig(ADArabic(title), image, identifier, handler);
+    NSString *ar = ADArabic(title);
+    return %orig(ar, image, identifier, handler);
 }
 %end

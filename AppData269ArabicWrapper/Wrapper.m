@@ -3,9 +3,29 @@
 #import <objc/runtime.h>
 #import <dlfcn.h>
 
-// AppData 2.6.9 Arabic wrapper ar3
+// AppData 2.7.1 Arabic wrapper.
+// Keep AppData's own localization engine on English when Arabic is selected,
+// then translate the rendered English UI and apply RTL here.
 static NSString * const ADPrefsPath = @"/var/mobile/Library/Preferences/com.fouadraheb.appdata.plist";
 static NSString * const ADMapPath = @"/var/jb/Library/Application Support/AppDataArabic/ar.plist";
+static NSString * const ADArabicFlagKey = @"ADArabicEnabled";
+
+static NSMutableDictionary *ADMutablePrefs(void) {
+    NSMutableDictionary *p = [NSMutableDictionary dictionaryWithContentsOfFile:ADPrefsPath];
+    return p ?: [NSMutableDictionary dictionary];
+}
+
+static BOOL ADArabic(void) {
+    NSDictionary *p = [NSDictionary dictionaryWithContentsOfFile:ADPrefsPath];
+    return [p[ADArabicFlagKey] boolValue];
+}
+
+static void ADSetArabic(BOOL enabled) {
+    NSMutableDictionary *p = ADMutablePrefs();
+    p[ADArabicFlagKey] = @(enabled);
+    if (enabled) p[@"ADLanguage"] = @"en";
+    [p writeToFile:ADPrefsPath atomically:YES];
+}
 
 static NSDictionary *ADMap(void) {
     static NSDictionary *map;
@@ -14,13 +34,6 @@ static NSDictionary *ADMap(void) {
     return map;
 }
 
-static NSString *ADLanguage(void) {
-    NSDictionary *p = [NSDictionary dictionaryWithContentsOfFile:ADPrefsPath];
-    NSString *v = p[@"ADLanguage"];
-    return [v isKindOfClass:[NSString class]] ? v : @"en";
-}
-
-static BOOL ADArabic(void) { return [ADLanguage() isEqualToString:@"ar"]; }
 static NSString *ADT(NSString *s) {
     if (!ADArabic() || ![s isKindOfClass:[NSString class]]) return s;
     return ADMap()[s] ?: s;
@@ -45,9 +58,9 @@ static void ADTranslateView(UIView *v) {
     } else if ([v isKindOfClass:[UIButton class]]) {
         UIButton *b = (UIButton *)v;
         for (NSNumber *n in @[@(UIControlStateNormal), @(UIControlStateHighlighted), @(UIControlStateDisabled), @(UIControlStateSelected)]) {
-            UIControlState s = (UIControlState)n.unsignedIntegerValue;
-            NSString *title = [b titleForState:s];
-            if (title) [b setTitle:ADT(title) forState:s];
+            UIControlState state = (UIControlState)n.unsignedIntegerValue;
+            NSString *title = [b titleForState:state];
+            if (title) [b setTitle:ADT(title) forState:state];
         }
     }
     for (UIView *sub in v.subviews) ADTranslateView(sub);
@@ -62,19 +75,35 @@ typedef id (*ADSelectInitIMP)(id, SEL, UITableViewStyle, NSString *, NSArray *, 
 static ADSelectInitIMP gSelectInit;
 
 static id ADSelectInit(id self, SEL _cmd, UITableViewStyle style, NSString *title, NSArray *items, NSArray *values, NSString *currentValue, BOOL pop, void (^changeBlock)(id)) {
-    BOOL isLanguage = ([title rangeOfString:@"Language" options:NSCaseInsensitiveSearch].location != NSNotFound || [title containsString:@"语言"] || [title containsString:@"اللغة"]);
-    if (isLanguage) {
-        NSMutableArray *newItems = [items mutableCopy] ?: [NSMutableArray array];
-        NSMutableArray *newValues = [values mutableCopy] ?: [NSMutableArray array];
-        if (![newValues containsObject:@"ar"]) {
-            [newItems addObject:@"العربية"];
-            [newValues addObject:@"ar"];
-        }
-        items = newItems;
-        values = newValues;
-        if (ADArabic()) title = @"اللغة";
+    BOOL isLanguage = ([title rangeOfString:@"Language" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+                       [title containsString:@"语言"] || [title containsString:@"اللغة"]);
+    if (!isLanguage) {
+        return gSelectInit(self, _cmd, style, title, items, values, currentValue, pop, changeBlock);
     }
-    return gSelectInit(self, _cmd, style, title, items, values, currentValue, pop, changeBlock);
+
+    NSMutableArray *newItems = [items mutableCopy] ?: [NSMutableArray array];
+    NSMutableArray *newValues = [values mutableCopy] ?: [NSMutableArray array];
+    if (![newValues containsObject:@"ar"]) {
+        [newItems addObject:@"العربية"];
+        [newValues addObject:@"ar"];
+    }
+
+    if (ADArabic()) {
+        currentValue = @"ar";
+        title = @"اللغة / Language";
+    }
+
+    void (^wrappedChange)(id) = ^(id value) {
+        if ([value isKindOfClass:[NSString class]] && [(NSString *)value isEqualToString:@"ar"]) {
+            ADSetArabic(YES);
+            if (changeBlock) changeBlock(@"en");
+        } else {
+            ADSetArabic(NO);
+            if (changeBlock) changeBlock(value);
+        }
+    };
+
+    return gSelectInit(self, _cmd, style, title, newItems, newValues, currentValue, pop, wrappedChange);
 }
 
 typedef void (*ADViewDidAppearIMP)(id, SEL, BOOL);
@@ -104,12 +133,14 @@ static void ADInstallControllerTranslation(void) {
     for (int i = 0; i < count; i++) {
         Class cls = classes[i];
         if (!ADClassIsOurs(cls) || ![cls isSubclassOfClass:[UIViewController class]]) continue;
-        Method m = class_getInstanceMethod(cls, sel);
-        IMP orig = method_getImplementation(m);
+        Method ownMethod = class_getInstanceMethod(cls, sel);
+        IMP orig = method_getImplementation(ownMethod);
         gOriginalViewDidAppear[NSStringFromClass(cls)] = [NSValue valueWithPointer:orig];
-        class_addMethod(cls, sel, (IMP)ADWrappedViewDidAppear, types);
-        Method own = class_getInstanceMethod(cls, sel);
-        method_setImplementation(own, (IMP)ADWrappedViewDidAppear);
+        if (class_addMethod(cls, sel, (IMP)ADWrappedViewDidAppear, types)) {
+            continue;
+        }
+        Method installed = class_getInstanceMethod(cls, sel);
+        method_setImplementation(installed, (IMP)ADWrappedViewDidAppear);
     }
     free(classes);
 }

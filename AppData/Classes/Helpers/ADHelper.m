@@ -18,8 +18,10 @@
     __strong static ADHelper *_sharedInstance = nil;
     dispatch_once(&p, ^{
         _sharedInstance = [[self alloc] init];
-        // Create resources bundle
-        _sharedInstance.resoucesBundle = [NSBundle bundleWithPath:@"/Library/Application Support/AppData/Resources.bundle"];
+        NSString *rootlessResourcesPath = @"/var/jb/Library/Application Support/AppData/Resources.bundle";
+        NSString *rootfulResourcesPath = @"/Library/Application Support/AppData/Resources.bundle";
+        NSString *resourcesPath = [[NSFileManager defaultManager] fileExistsAtPath:rootlessResourcesPath] ? rootlessResourcesPath : rootfulResourcesPath;
+        _sharedInstance.resoucesBundle = [NSBundle bundleWithPath:resourcesPath];
     });
     return _sharedInstance;
 }

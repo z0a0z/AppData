@@ -70,10 +70,10 @@
         
         if ([self isContainersSection:indexPath.section]) {
             if (indexPath.row == 0) {
-                cell.textLabel.text = @"Bundle";
+                cell.textLabel.text = @"حزمة التطبيق (Bundle)";
                 cell.detailTextLabel.text = self.appData.bundleURL.path;
             } else if (indexPath.row == 1) {
-                cell.textLabel.text = @"Data";
+                cell.textLabel.text = @"حاوية البيانات (Data)";
                 cell.detailTextLabel.text = self.appData.dataContainerURL.path;
             }
         } else if ([self isAppGroupsSection:indexPath.section]) {
@@ -102,34 +102,34 @@
                 __weak ADActionsBarView *weakActionsBar = actionsBar;
                 
                 // Clear Badge
-                [actionsBar addItemWithTitle:@"Update\nBadge"
+                [actionsBar addItemWithTitle:@"تحديث\nالشارة"
                                       detail:[NSString stringWithFormat:@"%td",[self.appData appBadgeCount]]
                                        image:[ADHelper imageNamed:@"ClearBadge"]
                                      handler:^{
-                    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Badges"
-                                                                                             message:[NSString stringWithFormat:@"Update or clear the app badges count"]
+                    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"شارات الإشعارات"
+                                                                                             message:[NSString stringWithFormat:@"تحديث أو تصفير عدد شارات التطبيق"]
                                                                                       preferredStyle:UIAlertControllerStyleAlert];
                     [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
                         textField.text = [NSString stringWithFormat:@"%td",self.appData.appBadgeCount];
-                        textField.placeholder = @"Badge Count";
+                        textField.placeholder = @"عدد الشارات";
                         textField.textAlignment = NSTextAlignmentCenter;
                         textField.enabled = NO;
                     }];
-                    [alertController addAction:[UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [alertController addAction:[UIAlertAction actionWithTitle:@"تحديث" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
                         UITextField *field = alertController.textFields.firstObject;
                         NSInteger count = [field.text integerValue];
                         [self.appData setAppBadgeCount:count];
-                        [weakActionsBar setDetail:@"Updated!" forItemAtIndex:0];
+                        [weakActionsBar setDetail:@"تم التحديث!" forItemAtIndex:0];
                         DISPATCH_AFTER(0.5, { [weakActionsBar setDetail:[NSString stringWithFormat:@"%td",count] forItemAtIndex:0]; });
                         if (self.dataViewController.dockDismissed && IS_IPAD) [ADDataViewController presentFloatingDockIfNeeded];
                     }]];
-                    [alertController addAction:[UIAlertAction actionWithTitle:@"Clear" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [alertController addAction:[UIAlertAction actionWithTitle:@"تصفير" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
                         [self.appData setAppBadgeCount:0];
-                        [weakActionsBar setDetail:@"Cleared!" forItemAtIndex:0];
+                        [weakActionsBar setDetail:@"تم التصفير!" forItemAtIndex:0];
                         DISPATCH_AFTER(0.5, { [weakActionsBar setDetail:@"0" forItemAtIndex:0]; });
                         if (self.dataViewController.dockDismissed && IS_IPAD) [ADDataViewController presentFloatingDockIfNeeded];
                     }]];
-                    [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+                    [alertController addAction:[UIAlertAction actionWithTitle:@"إلغاء" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
                         if (self.dataViewController.dockDismissed && IS_IPAD) [ADDataViewController presentFloatingDockIfNeeded];
                     }]];
                     
@@ -147,17 +147,17 @@
                 }];
                 
                 // Clear Caches
-                [actionsBar addItemWithTitle:@"Clear\nCaches"
-                                detail:@"Loading..."
+                [actionsBar addItemWithTitle:@"مسح\nالكاش"
+                                detail:@"جاري الحساب..."
                                  image:[ADHelper imageNamed:@"ClearCache"]
                                      handler:^{
                     NSInteger itemIndex = 1;
                     [weakActionsBar showLoadingIndicatorForItemAtIndex:itemIndex];
-                    [weakActionsBar setDetail:@"Clearing..." forItemAtIndex:itemIndex];
+                    [weakActionsBar setDetail:@"جاري المسح..." forItemAtIndex:itemIndex];
                     DISPATCH_AFTER(0.5, {
                         [self.appData clearAppCachesWithCompletion:^{
                             [weakActionsBar hideLoadingIndicatorForItemAtIndex:itemIndex];
-                            [weakActionsBar setDetail:@"Cleared!" forItemAtIndex:itemIndex];
+                            [weakActionsBar setDetail:@"تم المسح!" forItemAtIndex:itemIndex];
                             [[UINotificationFeedbackGenerator new] notificationOccurred:UINotificationFeedbackTypeSuccess];
                             DISPATCH_AFTER(0.5, {
                                 [self.appData getCachesDirectorySizeWithCompletion:^(NSString *formattedSize) {
@@ -169,19 +169,19 @@
                 }];
                 
                 // Clear App Data
-                [actionsBar addItemWithTitle:@"Clear App Data"
-                                      detail:@"Loading..."
+                [actionsBar addItemWithTitle:@"مسح البيانات"
+                                      detail:@"جاري الحساب..."
                                        image:[ADHelper imageNamed:@"ClearData"]
                                      handler:^{
                     if (self.appData.appStoreVendable) {
-                        [self showDestructiveConfirmationAlertWithTitle:@"Clear App Data" message:@"Clearing App data will only delete the app's \"Library\" and \"Documents\" folders inside Data bundle and not the App Groups." confirmTitle:@"Clear" confirmHandler:^{
+                        [self showDestructiveConfirmationAlertWithTitle:@"مسح بيانات التطبيق" message:@"سيؤدي مسح بيانات التطبيق إلى حذف مجلدي \"Library\" و \"Documents\" داخل حاوية البيانات فقط، ولن يؤثر على مجموعات التطبيق (App Groups)." confirmTitle:@"مسح" confirmHandler:^{
                             NSInteger itemIndex = 2;
                             [weakActionsBar showLoadingIndicatorForItemAtIndex:itemIndex];
-                            [weakActionsBar setDetail:@"Clearing..." forItemAtIndex:itemIndex];
+                            [weakActionsBar setDetail:@"جاري المسح..." forItemAtIndex:itemIndex];
                             DISPATCH_AFTER(0.5, {
                                 [self.appData resetDiskContentWithCompletion:^{
                                     [weakActionsBar hideLoadingIndicatorForItemAtIndex:itemIndex];
-                                    [weakActionsBar setDetail:@"Cleared!" forItemAtIndex:itemIndex];
+                                    [weakActionsBar setDetail:@"تم المسح!" forItemAtIndex:itemIndex];
                                     [[UINotificationFeedbackGenerator new] notificationOccurred:UINotificationFeedbackTypeSuccess];
                                     DISPATCH_AFTER(0.5, {
                                         [self.appData getAppUsageDirectorySizeWithCompletion:^(NSString *formattedSize) {
@@ -195,15 +195,15 @@
                 }];
                 
                 // Reset Permissions
-                [actionsBar addItemWithTitle:@"Reset Permissions"
+                [actionsBar addItemWithTitle:@"إعادة تعيين الأذونات"
                                       detail:[NSString stringWithFormat:@"%td",[self.appData getPermissions].count]
                                        image:[ADHelper imageNamed:@"ResetPermissions"]
                                      handler:^{
                     if (self.appData.appStoreVendable) {
-                        [self showDestructiveConfirmationAlertWithTitle:@"Reset Permissions" message:@"This will clear all the app permissions to access your Contacts, Photos, Camera, etc.\nNext time you use the app it will ask you again to grant permissions." confirmTitle:@"Reset" confirmHandler:^{
+                        [self showDestructiveConfirmationAlertWithTitle:@"إعادة تعيين الأذونات" message:@"سيؤدي هذا الإجراء إلى مسح جميع أذونات وصول التطبيق لجهات الاتصال، الصور، الكاميرا وغيرها.\nعند فتح التطبيق مجدداً سيطلب منك منح الأذونات من جديد." confirmTitle:@"إعادة تعيين" confirmHandler:^{
                             NSInteger itemIndex = 3;
                             [self.appData resetAllAppPermissions];
-                            [weakActionsBar setDetail:@"Reset!" forItemAtIndex:itemIndex];
+                            [weakActionsBar setDetail:@"تمت الإعادة!" forItemAtIndex:itemIndex];
                             [[UINotificationFeedbackGenerator new] notificationOccurred:UINotificationFeedbackTypeSuccess];
                             DISPATCH_AFTER(0.5, {
                                [weakActionsBar setDetail:[NSString stringWithFormat:@"%td",[self.appData getPermissions].count] forItemAtIndex:itemIndex];
@@ -213,12 +213,12 @@
                 }];
                 
                 // Offload App
-                [actionsBar addItemWithTitle:@"Offload\nApp"
+                [actionsBar addItemWithTitle:@"تفريغ\nالتطبيق"
                                       detail:nil
                                        image:[ADHelper imageNamed:@"OffloadApp"]
                                      handler:^{
                     if (self.appData.appStoreVendable) {
-                        [self showDestructiveConfirmationAlertWithTitle:@"Offload App" message:@"This will free up storage used by the app, but keep its documents and data. Reinstalling the app will reinstate your data if the app is still available in the AppStore." confirmTitle:@"Offload" confirmHandler:^{
+                        [self showDestructiveConfirmationAlertWithTitle:@"تفريغ التطبيق" message:@"سيؤدي هذا إلى توفير المساحة التخزينية التي يستخدمها التطبيق مع الاحتفاظ بمستنداته وبياناته. إعادة تثبيت التطبيق ستسترجع بياناتك طالما أن التطبيق ما زال متوفراً في App Store." confirmTitle:@"تفريغ" confirmHandler:^{
                             NSInteger itemIndex = 4;
                             [weakActionsBar showLoadingIndicatorForItemAtIndex:itemIndex];
                             [self.appData offloadAppWithCompletion:^{
@@ -257,7 +257,7 @@
                 cell.backgroundColor = [UIColor clearColor];
             }
             cell.accessoryView = [ADAppearance.sharedInstance tableCellChevronImageView];
-            cell.textLabel.text = @"More Info";
+            cell.textLabel.text = @"معلومات إضافية";
             [ADAppearance applyStylesToCell:cell];
             return cell;
         }
@@ -288,11 +288,11 @@
 
 - (NSString *)titleForHeaderInSection:(NSInteger)section {
     if ([self isContainersSection:section]) {
-        return self.appData.isApplication ? @"Containers" : nil;
+        return self.appData.isApplication ? @"المسارات والحاويات" : nil;
     } else if ([self isAppGroupsSection:section]) {
-        return !self.appData.appGroups || self.appData.appGroups.count == 0 ? nil : @"App Groups";
+        return !self.appData.appGroups || self.appData.appGroups.count == 0 ? nil : @"مجموعات التطبيقات (App Groups)";
     } else if ([self isManageSection:section]) {
-        return @"Manage";
+        return @"إدارة التطبيق";
     }
     return nil;
 }
@@ -374,25 +374,25 @@
                                                                                             previewProvider:nil
                                                                                              actionProvider:^UIMenu * _Nullable(NSArray<UIMenuElement *> * _Nonnull suggestedActions) {
             NSMutableArray *actions = [NSMutableArray new];
-            [actions addObject:[UIAction actionWithTitle:@"Open in Filza" image:nil identifier:@"open-action" handler:^(__kindof UIAction * _Nonnull action) {
+            [actions addObject:[UIAction actionWithTitle:@"فتح في Filza" image:nil identifier:@"open-action" handler:^(__kindof UIAction * _Nonnull action) {
                 [self didSelectContainerOrAppGroupSectionAtIndexPath:indexPath];
             }]];
-            [actions addObject:[UIAction actionWithTitle:@"Copy Path" image:nil identifier:@"copy-action" handler:^(__kindof UIAction * _Nonnull action) {
+            [actions addObject:[UIAction actionWithTitle:@"نسخ المسار" image:nil identifier:@"copy-action" handler:^(__kindof UIAction * _Nonnull action) {
                 UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
                 if (cell.detailTextLabel.text) [[UIPasteboard generalPasteboard] setString:cell.detailTextLabel.text];
             }]];
             if ([self isAppGroupsSection:indexPath.section]) {
-                [actions addObject:[UIAction actionWithTitle:@"Copy Identifier" image:nil identifier:@"copy-action" handler:^(__kindof UIAction * _Nonnull action) {
+                [actions addObject:[UIAction actionWithTitle:@"نسخ المعرّف" image:nil identifier:@"copy-action" handler:^(__kindof UIAction * _Nonnull action) {
                     UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
                     if (cell.textLabel.text) [[UIPasteboard generalPasteboard] setString:cell.textLabel.text];
                 }]];
             }
             NSString *title = @"";
             if ([self isContainersSection:indexPath.section]) {
-                if (indexPath.row == 0) title = @"Bundle";
-                else if (indexPath.row == 1) title = @"Data";
+                if (indexPath.row == 0) title = @"حزمة التطبيق (Bundle)";
+                else if (indexPath.row == 1) title = @"حاوية البيانات (Data)";
             } else if ([self isAppGroupsSection:indexPath.section]) {
-                title = @"App Group";
+                title = @"مجموعة التطبيق";
             }
             return [UIMenu menuWithTitle:title children:actions];
         }];
@@ -428,7 +428,7 @@
     [alertController addAction:[UIAlertAction actionWithTitle:confirmTitle style:style handler:^(UIAlertAction * _Nonnull action) {
         if (confirmHandler) confirmHandler();
     }]];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+    [alertController addAction:[UIAlertAction actionWithTitle:@"إلغاء" style:UIAlertActionStyleCancel handler:nil]];
     [self.dataViewController presentViewController:alertController animated:YES completion:nil];
 }
 

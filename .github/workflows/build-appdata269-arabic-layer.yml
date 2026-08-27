@@ -1,0 +1,44 @@
+name: Build AppData 2.6.9 Arabic Layer
+
+on:
+  push:
+    branches: [ appdata269-arabic-layer ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Theos
+        run: |
+          brew install ldid
+          sudo git clone --depth 1 --recursive https://github.com/theos/theos.git /opt/theos
+          sudo chmod -R a+rX,u+w /opt/theos
+
+      - name: Build Arabic layer
+        working-directory: ArabicLayer
+        env:
+          THEOS: /opt/theos
+        run: |
+          set -euo pipefail
+          export PATH="/opt/theos/bin:$PATH"
+          make clean all FINALPACKAGE=1
+          DYLIB="$(find .theos -type f -name 'AppDataArabic.dylib' | head -1)"
+          test -n "$DYLIB" && test -f "$DYLIB"
+          mkdir -p artifact
+          cp "$DYLIB" artifact/AppDataArabic.dylib
+          cp AppDataArabic.plist artifact/AppDataArabic.plist
+          file artifact/AppDataArabic.dylib
+          lipo -info artifact/AppDataArabic.dylib
+          otool -L artifact/AppDataArabic.dylib
+          ldid -S artifact/AppDataArabic.dylib
+
+      - name: Upload Arabic layer
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppData269-Arabic-Layer
+          path: ArabicLayer/artifact/*
+          if-no-files-found: error

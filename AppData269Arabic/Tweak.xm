@@ -1,17 +1,14 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
-#import <notify.h>
 
 static NSString * const ADPrefsPath = @"/var/mobile/Library/Preferences/com.fouadraheb.appdata.plist";
 static NSString * const ADMapPath = @"/var/jb/Library/Application Support/AppDataArabic/ar.plist";
+static NSString * const ADArabicFlagKey = @"ADArabicEnabled";
 
-static NSString *ADLanguage(void) {
+static BOOL ADArabic(void) {
     NSDictionary *p = [NSDictionary dictionaryWithContentsOfFile:ADPrefsPath];
-    NSString *v = p[@"ADLanguage"];
-    return [v isKindOfClass:[NSString class]] ? v : @"en";
+    return [p[ADArabicFlagKey] boolValue];
 }
-
-static BOOL ADArabic(void) { return [ADLanguage() isEqualToString:@"ar"]; }
 
 static NSDictionary *ADMap(void) {
     static NSDictionary *map;
@@ -49,30 +46,6 @@ static void ADLocalizeLabel(UILabel *label) {
     ADRTL(label);
 }
 
-%hook ADSelectListTableViewController
-- (instancetype)initWithStyle:(NSInteger)style
-                        title:(NSString *)title
-                        items:(NSArray *)items
-                       values:(NSArray *)values
-                 currentValue:(NSString *)currentValue
-              popViewOnSelect:(BOOL)popViewOnSelect
-                  changeBlock:(id)changeBlock {
-    BOOL isLanguage = ([title containsString:@"Language"] || [title containsString:@"语言"] || [title containsString:@"اللغة"]);
-    if (isLanguage) {
-        NSMutableArray *newItems = [items mutableCopy] ?: [NSMutableArray array];
-        NSMutableArray *newValues = [values mutableCopy] ?: [NSMutableArray array];
-        if (![newValues containsObject:@"ar"]) {
-            [newItems addObject:@"العربية"];
-            [newValues addObject:@"ar"];
-        }
-        items = newItems;
-        values = newValues;
-        if (ADArabic()) title = @"اللغة / Language";
-    }
-    return %orig;
-}
-%end
-
 %hook UILabel
 - (void)didMoveToWindow {
     %orig;
@@ -99,6 +72,21 @@ static void ADLocalizeLabel(UILabel *label) {
         if (translated && ![translated isEqualToString:self.text]) self.text = translated;
         NSString *placeholder = ADT(self.placeholder);
         if (placeholder && ![placeholder isEqualToString:self.placeholder]) self.placeholder = placeholder;
+        ADRTL(self);
+    }
+}
+%end
+
+%hook UIButton
+- (void)didMoveToWindow {
+    %orig;
+    if (ADArabic() && ADIsAppDataController(self)) {
+        for (NSNumber *n in @[@(UIControlStateNormal), @(UIControlStateHighlighted), @(UIControlStateDisabled), @(UIControlStateSelected)]) {
+            UIControlState state = (UIControlState)n.unsignedIntegerValue;
+            NSString *title = [self titleForState:state];
+            NSString *translated = ADT(title);
+            if (translated && ![translated isEqualToString:title]) [self setTitle:translated forState:state];
+        }
         ADRTL(self);
     }
 }

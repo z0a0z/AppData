@@ -26,7 +26,7 @@ jobs:
             -alltargets \
             -configuration Release \
             -sdk iphoneos \
-            -derivedDataPath build \
+            SYMROOT="$(pwd)/build" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
@@ -38,15 +38,15 @@ jobs:
           mkdir -p stage-rootful/Library/MobileSubstrate/DynamicLibraries
           mkdir -p stage-rootful/Library/PreferenceBundles
 
-          # نسخ معلومات الحزمة الأساسية
+          # نسخ معلومات الحزمة
           cp -r PackageInfo/* stage-rootful/DEBIAN/
 
-          # تجميع ملفات الأداة المبنية
-          find build/Build/Products/Release-iphoneos -name "*.dylib" -exec cp {} stage-rootful/Library/MobileSubstrate/DynamicLibraries/ \;
-          find build/Build/Products/Release-iphoneos -name "*.plist" -exec cp {} stage-rootful/Library/MobileSubstrate/DynamicLibraries/ \;
-          find build/Build/Products/Release-iphoneos -name "*.bundle" -exec cp -r {} stage-rootful/Library/PreferenceBundles/ \;
+          # نسخ ملفات الأداة المبنية
+          find build -name "*.dylib" -exec cp {} stage-rootful/Library/MobileSubstrate/DynamicLibraries/ \;
+          find build -name "*.plist" -not -path "*/Info.plist" -exec cp {} stage-rootful/Library/MobileSubstrate/DynamicLibraries/ \;
+          find build -name "*.bundle" -exec cp -r {} stage-rootful/Library/PreferenceBundles/ \;
 
-          # توقيع وتجميع الـ deb
+          # توقيع وتجميع الحزمة
           find stage-rootful -name "*.dylib" -exec ldid -S {} \;
           dpkg-deb -b -Zgzip stage-rootful packages/com.fouadraheb.appdata_rootful.deb
 
@@ -56,16 +56,16 @@ jobs:
           mkdir -p stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries
           mkdir -p stage-rootless/var/jb/Library/PreferenceBundles
 
-          # نسخ وتعديل المعمارية إلى arm64
+          # نسخ وتعديل المعمارية للـ Rootless
           cp -r PackageInfo/* stage-rootless/DEBIAN/
           sed -i '' 's/iphoneos-arm/iphoneos-arm64/g' stage-rootless/DEBIAN/control
 
-          # تجميع ملفات الأداة للـ Rootless
-          find build/Build/Products/Release-iphoneos -name "*.dylib" -exec cp {} stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/ \;
-          find build/Build/Products/Release-iphoneos -name "*.plist" -exec cp {} stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/ \;
-          find build/Build/Products/Release-iphoneos -name "*.bundle" -exec cp -r {} stage-rootless/var/jb/Library/PreferenceBundles/ \;
+          # نسخ ملفات الأداة المبنية
+          find build -name "*.dylib" -exec cp {} stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/ \;
+          find build -name "*.plist" -not -path "*/Info.plist" -exec cp {} stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/ \;
+          find build -name "*.bundle" -exec cp -r {} stage-rootless/var/jb/Library/PreferenceBundles/ \;
 
-          # توقيع وتجميع الـ deb
+          # توقيع وتجميع الحزمة
           find stage-rootless -name "*.dylib" -exec ldid -S {} \;
           dpkg-deb -b -Zgzip stage-rootless packages/com.fouadraheb.appdata_rootless.deb
 

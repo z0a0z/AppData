@@ -9,18 +9,14 @@
 %property (nonatomic, retain) UISwipeGestureRecognizer *adSwipeGestureRecognizer;
 
 - (SBIconImageView *)initWithFrame:(CGRect)arg1 {
-    %log;
     SBIconImageView *r = %orig;
     if (![r isKindOfClass:NSClassFromString(@"SBFolderIconImageView")]
         && [r respondsToSelector:@selector(setAdSwipeGestureRecognizer:)]) {
         [[NSNotificationCenter defaultCenter] addObserver:r selector:@selector(appDataPreferencesChanged) name:kAppDataSwipeUpPreferencesChangedNotification object:nil];
         
-        // Create Gesture Recognizer
         self.adSwipeGestureRecognizer = [[UISwipeGestureRecognizer alloc] initWithTarget:r action:@selector(appDataDidSwipeUp:)];
         self.adSwipeGestureRecognizer.direction = (UISwipeGestureRecognizerDirectionUp);
         r.userInteractionEnabled = YES;
-        
-        // Add gesture if enabled
         [self appDataPreferencesChanged];
     }
     return r;
@@ -105,7 +101,6 @@
 
 %hook SBSApplicationShortcutItem
 
-// iOS 13
 - (BOOL)sbh_isSystemShortcut {
     if ([self respondsToSelector:@selector(type)]
         && [self.type respondsToSelector:@selector(isEqualToString:)]
@@ -115,7 +110,6 @@
     return %orig;
 }
 
-// iOS 14
 - (NSUInteger)sbh_shortcutSection {
     if ([self respondsToSelector:@selector(type)]
         && [self.type respondsToSelector:@selector(isEqualToString:)]
@@ -129,14 +123,14 @@
 
 %end
 
-
 %group IOS12_AND_OLDER_HOOKS
 
 %hook SBUIAppIconForceTouchControllerDataProvider
 
 - (id)applicationShortcutItems {
     if ([ADSettings forceTouchMenuEnabled]) {
-        NSMutableArray *newItems = [NSMutableArray arrayWithArray:%orig?:@[]];
+        NSArray *originalItems = %orig;
+        NSMutableArray *newItems = [NSMutableArray arrayWithArray:(originalItems ?: @[])];
         SBSApplicationShortcutItem *shortcutItem = [ADHelper applicationShortcutItem];
         if (shortcutItem) {
             [newItems insertObject:shortcutItem atIndex:0];
@@ -168,7 +162,6 @@
 %end
 
 %end
-
 
 %ctor {
     %init(SHARED_HOOKS);

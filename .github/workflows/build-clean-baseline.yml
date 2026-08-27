@@ -1,0 +1,113 @@
+name: Build Clean Rootless Baseline
+
+on:
+  push:
+    branches: [ chatgpt-clean-arabic-v2 ]
+  workflow_dispatch:
+
+env:
+  THEOS: /opt/theos
+  MonkeyDevPath: /opt/MonkeyDev
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout clean baseline
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install dpkg ldid
+          sudo git clone --depth 1 --recursive https://github.com/theos/theos.git /opt/theos
+          sudo git clone --depth 1 --recursive https://github.com/AloneMonkey/MonkeyDev.git /opt/MonkeyDev
+          sudo chmod -R a+rX,u+w /opt/theos /opt/MonkeyDev
+
+      - name: Regenerate Logos output
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$THEOS/bin:$MonkeyDevPath/bin:$PATH"
+          "$THEOS/bin/logos.pl" AppData/AppData.xm > AppData/AppData.mm.generated
+          test -s AppData/AppData.mm.generated
+          mv AppData/AppData.mm.generated AppData/AppData.mm
+
+      - name: Compile clean baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$THEOS/bin:$MonkeyDevPath/bin:$PATH"
+          xcodebuild clean build \
+            -project AppData.xcodeproj \
+            -alltargets \
+            -configuration Release \
+            -sdk iphoneos \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+            SYMROOT="$PWD/build" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Locate products
+        shell: bash
+        run: |
+          set -euo pipefail
+          find build -maxdepth 6 -type f -name 'AppData.dylib' -print
+          find build -maxdepth 6 -type d -name 'AppDataPrefs.bundle' -print
+          test -n "$(find build -type f -name 'AppData.dylib' -print -quit)"
+          test -n "$(find build -type d -name 'AppDataPrefs.bundle' -print -quit)"
+
+      - name: Build rootless DEB
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD/stage-rootless"
+          rm -rf "$ROOT" packages
+          mkdir -p "$ROOT/DEBIAN" packages
+          cp AppData/Package/DEBIAN/control "$ROOT/DEBIAN/control"
+          sed -i '' 's/^Architecture:.*/Architecture: iphoneos-arm64/' "$ROOT/DEBIAN/control"
+          sed -i '' 's#^Icon:.*#Icon: file:///var/jb/Library/PreferenceBundles/AppDataPrefs.bundle/AppData@3x.png#' "$ROOT/DEBIAN/control"
+          mkdir -p "$ROOT/var/jb/Library"
+          cp -R AppData/Package/Library/. "$ROOT/var/jb/Library/"
+
+          DYLIB="$(find build -type f -name 'AppData.dylib' -print -quit)"
+          PREF_BUNDLE="$(find build -type d -name 'AppDataPrefs.bundle' -print -quit)"
+          install -m 0755 "$DYLIB" "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib"
+          rm -rf "$ROOT/var/jb/Library/PreferenceBundles/AppDataPrefs.bundle"
+          cp -R "$PREF_BUNDLE" "$ROOT/var/jb/Library/PreferenceBundles/AppDataPrefs.bundle"
+
+          if otool -L "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib" | grep -q '/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate'; then
+            install_name_tool -change \
+              /Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate \
+              /var/jb/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate \
+              "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib"
+          fi
+
+          ldid -S "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib"
+          PREF_EXEC="$ROOT/var/jb/Library/PreferenceBundles/AppDataPrefs.bundle/AppDataPrefs"
+          if [ -f "$PREF_EXEC" ]; then ldid -S "$PREF_EXEC"; fi
+
+          test -f "$ROOT/DEBIAN/control"
+          test -f "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib"
+          test -f "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.plist"
+          test -d "$ROOT/var/jb/Library/PreferenceBundles/AppDataPrefs.bundle"
+          test -f "$ROOT/var/jb/Library/PreferenceLoader/Preferences/AppDataPrefs.plist"
+          test -d "$ROOT/var/jb/Library/Application Support/AppData/Resources.bundle"
+
+          DEB="packages/com.fouadraheb.appdata_1.3.6_clean_rootless_iphoneos-arm64.deb"
+          dpkg-deb -b -Zgzip "$ROOT" "$DEB"
+          dpkg-deb -I "$DEB"
+          dpkg-deb -c "$DEB"
+          shasum -a 256 "$DEB"
+          otool -L "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib"
+          file "$ROOT/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib"
+
+      - name: Upload baseline DEB
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppData-Clean-Rootless-Baseline
+          path: packages/*.deb

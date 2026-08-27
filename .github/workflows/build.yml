@@ -5,6 +5,9 @@ on:
     branches: [ master, main ]
   workflow_dispatch:
 
+env:
+  THEOS: /tmp/theos
+
 jobs:
   build:
     runs-on: macos-14
@@ -15,15 +18,16 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Theos
-        uses: theos/action-setup-theos@master
+      - name: Install Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git "$THEOS"
 
       - name: Setup iOS SDK
         run: |
-          mkdir -p $THEOS/sdks
           curl -LO https://github.com/theos/sdks/archive/master.zip
           unzip -q master.zip
-          cp -r sdks-master/iPhoneOS14.5.sdk $THEOS/sdks/ 2>/dev/null || cp -r sdks-master/iPhoneOS*.sdk $THEOS/sdks/
+          mkdir -p "$THEOS/sdks"
+          cp -r sdks-master/iPhoneOS*.sdk "$THEOS/sdks/"
           rm -rf master.zip sdks-master
 
       - name: Build Rootless Package (Dopamine / iOS 15+)
@@ -33,6 +37,7 @@ jobs:
 
       - name: Build Rootful Package (Legacy)
         run: |
+          make clean
           make package FINALPACKAGE=1
 
       - name: Upload Artifacts

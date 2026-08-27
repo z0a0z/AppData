@@ -15,57 +15,58 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Build Tools
+      - name: Setup Tools & MonkeyDev Mock
         run: |
           brew install dpkg ldid
+          
+          # إنشاء بيئة وهمية لـ MonkeyDev لتخطي سكربتات Xcode
+          sudo mkdir -p /opt/MonkeyDev/bin
+          sudo tee /opt/MonkeyDev/bin/md > /dev/null << 'EOF'
+          #!/bin/bash
+          exit 0
+          EOF
+          sudo chmod +x /opt/MonkeyDev/bin/md
 
-      - name: Compile Xcode Project
+      - name: Compile Project
         run: |
           xcodebuild clean build \
             -project AppData.xcodeproj \
             -alltargets \
             -configuration Release \
             -sdk iphoneos \
+            IPHONEOS_DEPLOYMENT_TARGET=12.0 \
             SYMROOT="$(pwd)/build" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
-      - name: Package Rootful DEB
+      - name: Build Rootful Package
         run: |
-          mkdir -p packages
-          mkdir -p stage-rootful/DEBIAN
+          mkdir -p packages stage-rootful/DEBIAN
           mkdir -p stage-rootful/Library/MobileSubstrate/DynamicLibraries
           mkdir -p stage-rootful/Library/PreferenceBundles
 
-          # نسخ معلومات الحزمة
           cp -r PackageInfo/* stage-rootful/DEBIAN/
-
-          # نسخ ملفات الأداة المبنية
           find build -name "*.dylib" -exec cp {} stage-rootful/Library/MobileSubstrate/DynamicLibraries/ \;
-          find build -name "*.plist" -not -path "*/Info.plist" -exec cp {} stage-rootful/Library/MobileSubstrate/DynamicLibraries/ \;
+          find . -maxdepth 3 -name "AppData.plist" -not -path "./build/*" -exec cp {} stage-rootful/Library/MobileSubstrate/DynamicLibraries/ \;
           find build -name "*.bundle" -exec cp -r {} stage-rootful/Library/PreferenceBundles/ \;
 
-          # توقيع وتجميع الحزمة
           find stage-rootful -name "*.dylib" -exec ldid -S {} \;
           dpkg-deb -b -Zgzip stage-rootful packages/com.fouadraheb.appdata_rootful.deb
 
-      - name: Package Rootless DEB (iOS 15+)
+      - name: Build Rootless Package (iOS 15+)
         run: |
           mkdir -p stage-rootless/DEBIAN
           mkdir -p stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries
           mkdir -p stage-rootless/var/jb/Library/PreferenceBundles
 
-          # نسخ وتعديل المعمارية للـ Rootless
           cp -r PackageInfo/* stage-rootless/DEBIAN/
           sed -i '' 's/iphoneos-arm/iphoneos-arm64/g' stage-rootless/DEBIAN/control
 
-          # نسخ ملفات الأداة المبنية
           find build -name "*.dylib" -exec cp {} stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/ \;
-          find build -name "*.plist" -not -path "*/Info.plist" -exec cp {} stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/ \;
+          find . -maxdepth 3 -name "AppData.plist" -not -path "./build/*" -exec cp {} stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/ \;
           find build -name "*.bundle" -exec cp -r {} stage-rootless/var/jb/Library/PreferenceBundles/ \;
 
-          # توقيع وتجميع الحزمة
           find stage-rootless -name "*.dylib" -exec ldid -S {} \;
           dpkg-deb -b -Zgzip stage-rootless packages/com.fouadraheb.appdata_rootless.deb
 

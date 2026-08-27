@@ -4,5 +4,8 @@
             "com.apple.springboard",
             "com.apple.Preferences"
         );
+        Executables = (
+            "Preferences"
+        );
     };
 }

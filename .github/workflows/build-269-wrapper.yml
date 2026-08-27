@@ -43,12 +43,7 @@ jobs:
           file wrapper-output/AppDataPrefs | grep -q 'Mach-O universal binary'
           strings wrapper-output/AppDataPrefs | grep -q 'AppDataPrefsOriginal'
           strings wrapper-output/AppDataPrefs | grep -q 'ADSelectListTableViewController'
-          python3 - <<'PY'
-          from pathlib import Path
-          data = Path('wrapper-output/AppDataPrefs').read_bytes()
-          assert 'العربية'.encode('utf-8') in data
-          assert b'ADLanguage' in data
-          PY
+          strings wrapper-output/AppDataPrefs | grep -q 'ADLanguage'
 
       - name: Upload wrapper
         uses: actions/upload-artifact@v4

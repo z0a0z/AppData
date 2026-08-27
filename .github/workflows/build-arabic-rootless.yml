@@ -92,29 +92,22 @@ jobs:
           set -euo pipefail
           rm -rf stage-rootless packages
           mkdir -p stage-rootless/DEBIAN packages stage-rootless/var/jb
-
-          # Copy the complete original payload so Resources.bundle,
-          # PreferenceLoader and filter plist cannot be omitted.
           cp -R AppData/Package/Library stage-rootless/var/jb/
-
-          # Replace historical binaries with the freshly compiled Arabic build.
           rm -rf stage-rootless/var/jb/Library/PreferenceBundles/AppDataPrefs.bundle
           cp -R "$PREF_BUNDLE" stage-rootless/var/jb/Library/PreferenceBundles/AppDataPrefs.bundle
           cp "$DYLIB" stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib
-
-          cat > stage-rootless/DEBIAN/control <<'EOF'
-Package: com.fouadraheb.appdata
-Name: AppData Arabic
-Version: 1.3.6+ar.rootless1
-Description: Arabic RTL build of AppData for Dopamine rootless
-Section: Tweaks
-Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
-Architecture: iphoneos-arm64
-Author: Fouad Raheb
-Maintainer: Arabic rootless build
-Icon: file:///var/jb/Library/PreferenceBundles/AppDataPrefs.bundle/AppData@3x.png
-EOF
-
+          printf '%s\n' \
+            'Package: com.fouadraheb.appdata' \
+            'Name: AppData Arabic' \
+            'Version: 1.3.6+ar.rootless1' \
+            'Description: Arabic RTL build of AppData for Dopamine rootless' \
+            'Section: Tweaks' \
+            'Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader' \
+            'Architecture: iphoneos-arm64' \
+            'Author: Fouad Raheb' \
+            'Maintainer: Arabic rootless build' \
+            'Icon: file:///var/jb/Library/PreferenceBundles/AppDataPrefs.bundle/AppData@3x.png' \
+            > stage-rootless/DEBIAN/control
           ldid -S stage-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/AppData.dylib
           ldid -S stage-rootless/var/jb/Library/PreferenceBundles/AppDataPrefs.bundle/AppDataPrefs
           dpkg-deb -b -Zgzip stage-rootless packages/com.fouadraheb.appdata_1.3.6+ar.rootless1_iphoneos-arm64.deb
@@ -131,7 +124,6 @@ EOF
           grep -q './var/jb/Library/Application Support/AppData/Resources.bundle/' package-contents.txt
           grep -q './var/jb/Library/PreferenceBundles/AppDataPrefs.bundle/AppDataPrefs' package-contents.txt
           grep -q './var/jb/Library/PreferenceLoader/Preferences/AppDataPrefs.plist' package-contents.txt
-
           rm -rf verify-root
           mkdir verify-root
           dpkg-deb -x "$DEB" verify-root

@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Language</key><string>اللغة</string>
+    <key>Settings</key><string>الإعدادات</string>
+    <key>Appearance</key><string>المظهر</string>
+    <key>Clear Cache</key><string>مسح ذاكرة التخزين المؤقت</string>
+    <key>Clear Data</key><string>مسح البيانات</string>
+    <key>Clear App Data</key><string>مسح بيانات التطبيق</string>
+    <key>Reset App Data</key><string>إعادة ضبط بيانات التطبيق</string>
+    <key>Reset Perms</key><string>إعادة ضبط الأذونات</string>
+    <key>Reset App Perms</key><string>إعادة ضبط أذونات التطبيق</string>
+    <key>Downgrade</key><string>الرجوع إلى إصدار أقدم</string>
+    <key>Downgrade App</key><string>الرجوع إلى إصدار أقدم</string>
+    <key>Uninstall</key><string>إلغاء التثبيت</string>
+    <key>Offload</key><string>إلغاء تحميل التطبيق</string>
+    <key>Block Open</key><string>منع الفتح</string>
+    <key>Block Notif</key><string>منع الإشعارات</string>
+    <key>Block Notifs</key><string>منع الإشعارات</string>
+    <key>No Uninstall</key><string>منع إلغاء التثبيت</string>
+    <key>Block Update</key><string>منع التحديث</string>
+    <key>Block App Update</key><string>منع تحديث التطبيق</string>
+    <key>Auto Clear</key><string>التنظيف التلقائي</string>
+    <key>Mute App</key><string>كتم التطبيق</string>
+    <key>App Lock</key><string>قفل التطبيق</string>
+    <key>iOS Settings</key><string>إعدادات iOS</string>
+    <key>App Perms</key><string>أذونات التطبيق</string>
+    <key>Bundle</key><string>حزمة التطبيق</string>
+    <key>Data</key><string>البيانات</string>
+    <key>Groups</key><string>المجموعات</string>
+    <key>App Groups</key><string>مجموعات التطبيقات</string>
+    <key>Containers</key><string>الحاويات</string>
+    <key>More Info</key><string>معلومات إضافية</string>
+    <key>More List</key><string>قائمة المزيد</string>
+    <key>Cancel</key><string>إلغاء</string>
+    <key>Apply</key><string>تطبيق</string>
+    <key>Clear</key><string>مسح</string>
+    <key>Reset</key><string>إعادة ضبط</string>
+    <key>Notice</key><string>تنبيه</string>
+    <key>Hidden Apps</key><string>التطبيقات المخفية</string>
+    <key>None</key><string>لا شيء</string>
+    <key>Swipe Up</key><string>السحب لأعلى</string>
+    <key>Swipe Down</key><string>السحب لأسفل</string>
+    <key>3D Touch Menu</key><string>قائمة 3D Touch</string>
+    <key>Open Source</key><string>المصدر المفتوح</string>
+    <key>Open in Filza</key><string>فتح في Filza</string>
+    <key>Copy Path</key><string>نسخ المسار</string>
+    <key>Copy Identifier</key><string>نسخ المعرّف</string>
+    <key>Select Version</key><string>اختيار الإصدار</string>
+    <key>App Name</key><string>اسم التطبيق</string>
+    <key>Global Settings</key><string>الإعدادات العامة</string>
+    <key>Cleared!</key><string>تم المسح!</string>
+    <key>Reset!</key><string>تمت إعادة الضبط!</string>
+    <key>Clearing...</key><string>جارٍ المسح...</string>
+    <key>No apps configured.</key><string>لم يتم إعداد أي تطبيق.</string>
+    <key>Applied</key><string>تم التطبيق</string>
+    <key>Apply Theme</key><string>تطبيق السمة</string>
+    <key>Fetching data, please wait...</key><string>جارٍ جلب البيانات، يرجى الانتظار...</string>
+    <key>No App Store account found.</key><string>لم يتم العثور على حساب App Store.</string>
+    <key>No version history found.</key><string>لم يتم العثور على سجل للإصدارات.</string>
+    <key>Choose a version to install.</key><string>اختر إصدارًا للتثبيت.</string>
+    <key>Manage app data on the Home Screen.</key><string>إدارة بيانات التطبيقات من الشاشة الرئيسية.</string>
+
+    <key>面板按钮设置</key><string>إعداد أزرار اللوحة</string>
+    <key>恢复默认</key><string>استعادة الافتراضي</string>
+    <key>修改角标</key><string>تعديل الشارة</string>
+    <key>清理缓存</key><string>مسح ذاكرة التخزين المؤقت</string>
+    <key>清理数据</key><string>مسح البيانات</string>
+    <key>清理应用数据</key><string>مسح بيانات التطبيق</string>
+    <key>重置应用数据</key><string>إعادة ضبط بيانات التطبيق</string>
+    <key>重置权限</key><string>إعادة ضبط الأذونات</string>
+    <key>重置应用权限</key><string>إعادة ضبط أذونات التطبيق</string>
+    <key>降级应用</key><string>الرجوع إلى إصدار أقدم</string>
+    <key>卸载应用</key><string>إلغاء تثبيت التطبيق</string>
+    <key>禁止打开</key><string>منع الفتح</string>
+    <key>禁止打开应用</key><string>منع فتح التطبيق</string>
+    <key>禁止通知</key><string>منع الإشعارات</string>
+    <key>禁止应用通知</key><string>منع إشعارات التطبيق</string>
+    <key>禁止卸载</key><string>منع إلغاء التثبيت</string>
+    <key>禁止卸载应用</key><string>منع إلغاء تثبيت التطبيق</string>
+    <key>禁止更新</key><string>منع التحديث</string>
+    <key>禁止自动更新</key><string>منع التحديث التلقائي</string>
+    <key>自动清理</key><string>التنظيف التلقائي</string>
+    <key>自动清理缓存</key><string>التنظيف التلقائي للتخزين المؤقت</string>
+    <key>启动应用禁音</key><string>كتم التطبيق عند التشغيل</string>
+    <key>需要密码打开</key><string>طلب كلمة مرور للفتح</string>
+    <key>应用权限设置</key><string>إعدادات أذونات التطبيق</string>
+    <key>应用启动亮度</key><string>سطوع التطبيق عند التشغيل</string>
+    <key>更多功能列表</key><string>قائمة الوظائف الإضافية</string>
+    <key>更多信息</key><string>معلومات إضافية</string>
+    <key>更多功能</key><string>وظائف إضافية</string>
+    <key>隐藏应用名单</key><string>قائمة التطبيقات المخفية</string>
+    <key>搜索应用...</key><string>البحث عن تطبيق...</string>
+    <key>提示</key><string>تنبيه</string>
+    <key>知道了</key><string>حسنًا</string>
+    <key>取消</key><string>إلغاء</string>
+    <key>确定</key><string>موافق</string>
+    <key>保存</key><string>حفظ</string>
+    <key>选择</key><string>اختيار</string>
+    <key>修改</key><string>تعديل</string>
+    <key>清除</key><string>مسح</string>
+    <key>导入</key><string>استيراد</string>
+    <key>导入失败</key><string>فشل الاستيراد</string>
+    <key>导入完成</key><string>اكتمل الاستيراد</string>
+    <key>解压失败</key><string>فشل فك الضغط</string>
+    <key>文件损坏或格式不支持</key><string>الملف تالف أو الصيغة غير مدعومة</string>
+    <key>删除</key><string>حذف</string>
+    <key>重命名</key><string>إعادة تسمية</string>
+    <key>重命名主题</key><string>إعادة تسمية السمة</string>
+    <key>向上滑动图标</key><string>السحب لأعلى على الأيقونة</string>
+    <key>向下滑动图标</key><string>السحب لأسفل على الأيقونة</string>
+    <key>三维触控菜单</key><string>قائمة 3D Touch</string>
+    <key>隐藏面板线条</key><string>إخفاء فواصل اللوحة</string>
+    <key>面板外观设置</key><string>إعدادات مظهر اللوحة</string>
+    <key>语言 / Language</key><string>اللغة / Language</string>
+    <key>插件设置</key><string>إعدادات الأداة</string>
+    <key>功能配置与说明</key><string>إعداد الوظائف وشرحها</string>
+    <key>原开发者</key><string>المطور الأصلي</string>
+    <key>源代码</key><string>المصدر المفتوح</string>
+    <key>系统权限</key><string>أذونات النظام</string>
+    <key>系统权限设置</key><string>إعدادات أذونات النظام</string>
+    <key>从服务器获取</key><string>الجلب من الخادم</string>
+    <key>从本地备份获取</key><string>الجلب من النسخة الاحتياطية المحلية</string>
+    <key>自定义版本号</key><string>رقم إصدار مخصص</string>
+    <key>备份应用版本</key><string>نسخ إصدار التطبيق احتياطيًا</string>
+    <key>应用目录</key><string>مجلد التطبيق</string>
+    <key>数据目录</key><string>مجلد البيانات</string>
+    <key>应用分组</key><string>مجموعات التطبيقات</string>
+    <key>应用分组 (App Groups)</key><string>مجموعات التطبيقات (App Groups)</string>
+    <key>沙盒目录</key><string>مجلد الحاوية</string>
+    <key>保留数据</key><string>الاحتفاظ بالبيانات</string>
+    <key>彻底卸载</key><string>إلغاء تثبيت كامل</string>
+    <key>关闭</key><string>إغلاق</string>
+    <key>通用</key><string>عام</string>
+    <key>系统应用</key><string>تطبيق نظام</string>
+    <key>越狱应用</key><string>تطبيق جيلبريك</string>
+    <key>版本回退</key><string>الرجوع إلى إصدار</string>
+    <key>错误</key><string>خطأ</string>
+    <key>已切换</key><string>تم التبديل</string>
+    <key>应用角标</key><string>شارة التطبيق</string>
+    <key>角标数量</key><string>عدد الشارة</string>
+    <key>降级</key><string>الرجوع لإصدار أقدم</string>
+    <key>请输入版本号</key><string>أدخل رقم الإصدار</string>
+    <key>无效版本号</key><string>رقم الإصدار غير صالح</string>
+    <key>验证失败</key><string>فشل التحقق</string>
+    <key>未找到备份</key><string>لم يتم العثور على نسخة احتياطية</string>
+    <key>备份中...</key><string>جارٍ النسخ الاحتياطي...</string>
+    <key>备份完成</key><string>اكتمل النسخ الاحتياطي</string>
+    <key>切换 Apple ID</key><string>تبديل Apple ID</string>
+    <key>选择版本</key><string>اختيار الإصدار</string>
+    <key>卸载</key><string>إلغاء التثبيت</string>
+    <key>从相册选择</key><string>اختيار من الصور</string>
+    <key>恢复默认图标</key><string>استعادة الأيقونة الافتراضية</string>
+    <key>修改名称</key><string>تعديل الاسم</string>
+    <key>应用名称</key><string>اسم التطبيق</string>
+    <key>开启通知</key><string>تفعيل الإشعارات</string>
+    <key>禁用通知</key><string>تعطيل الإشعارات</string>
+    <key>电源选项</key><string>خيارات الطاقة</string>
+    <key>关机</key><string>إيقاف التشغيل</string>
+    <key>注销(SB)</key><string>إعادة تشغيل SpringBoard</string>
+    <key>安全模式</key><string>الوضع الآمن</string>
+    <key>重启设备</key><string>إعادة تشغيل الجهاز</string>
+    <key>重启用户空间</key><string>إعادة تشغيل UserSpace</string>
+    <key>刷新图标</key><string>تحديث الأيقونات</string>
+    <key>应用内部版本</key><string>الإصدار الداخلي للتطبيق</string>
+    <key>最低支持版本</key><string>أدنى إصدار مدعوم</string>
+    <key>平台编译版本</key><string>إصدار منصة البناء</string>
+    <key>应用加密状态</key><string>حالة تشفير التطبيق</string>
+    <key>已加密</key><string>مشفّر</string>
+    <key>已解密</key><string>غير مشفّر</string>
+    <key>活动类型</key><string>أنواع النشاط</string>
+    <key>后台模式</key><string>أوضاع الخلفية</string>
+    <key>授权标识</key><string>الاستحقاقات</string>
+    <key>在 Filza 中打开</key><string>فتح في Filza</string>
+    <key>复制路径</key><string>نسخ المسار</string>
+    <key>复制 Identifier</key><string>نسخ المعرّف</string>
+    <key>已全部复制</key><string>تم نسخ الكل</string>
+    <key>深色模式</key><string>الوضع الداكن</string>
+    <key>浅色模式</key><string>الوضع الفاتح</string>
+    <key>跟随系统</key><string>حسب النظام</string>
+    <key>已复制</key><string>تم النسخ</string>
+    <key>应用注入设置</key><string>إعدادات حقن التطبيق</string>
+    <key>应用跳转设置</key><string>إعدادات إعادة توجيه التطبيق</string>
+    <key>应用真后台设置</key><string>إعدادات الخلفية الحقيقية</string>
+    <key>输入密码</key><string>أدخل كلمة المرور</string>
+    <key>请验证身份以打开应用</key><string>تحقق من هويتك لفتح التطبيق</string>
+    <key>修改图标</key><string>تعديل الأيقونة</string>
+    <key>开启</key><string>تفعيل</string>
+    <key>禁用</key><string>تعطيل</string>
+    <key>切换账号</key><string>تبديل الحساب</string>
+    <key>未知错误</key><string>خطأ غير معروف</string>
+    <key>请输入正确的版本号</key><string>أدخل رقم إصدار صحيح</string>
+    <key>输入错误</key><string>خطأ في الإدخال</string>
+    <key>验证版本...</key><string>جارٍ التحقق من الإصدار...</string>
+    <key>设置</key><string>الإعدادات</string>
+    <key>启动禁音</key><string>الكتم عند التشغيل</string>
+    <key>启动亮度</key><string>سطوع التشغيل</string>
+    <key>复制</key><string>نسخ</string>
+    <key>查询 Schemes</key><string>الاستعلام عن Schemes</string>
+</dict>
+</plist>

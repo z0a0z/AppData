@@ -68,13 +68,13 @@
         }
         [ADAppearance applyStylesToCell:cell];
         if (indexPath.row == 0) {
-            cell.textLabel.text = @"Internal Version";
+            cell.textLabel.text = @"الإصدار الداخلي";
             cell.detailTextLabel.text = [NSString stringWithFormat:@"%@",self.appData.internalVersion];
         } else if (indexPath.row == 1) {
-            cell.textLabel.text = @"Minimum iOS Version";
+            cell.textLabel.text = @"الحد الأدنى لإصدار iOS";
             cell.detailTextLabel.text = [NSString stringWithFormat:@"%@",self.appData.minimumOSVersion];
         } else if (indexPath.row == 2) {
-            cell.textLabel.text = @"Platform Build Version";
+            cell.textLabel.text = @"إصدار بنية النظام";
             cell.detailTextLabel.text = [NSString stringWithFormat:@"%@",self.appData.platformVersion];
         }
         return cell;
@@ -129,8 +129,8 @@
         NSString *detailText = [NSString stringWithFormat:@"%@",[self.appData.entitlements objectForKey:entitlementIdentifier]];
         
         UIAlertController *alertController = [UIAlertController alertControllerWithTitle:entitlementIdentifier message:detailText preferredStyle:IS_IPAD ? UIAlertControllerStyleAlert : UIAlertControllerStyleActionSheet];
-        [alertController addAction:[UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleCancel handler:nil]];
-        [alertController addAction:[UIAlertAction actionWithTitle:@"Copy" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [alertController addAction:[UIAlertAction actionWithTitle:@"إغلاق" style:UIAlertActionStyleCancel handler:nil]];
+        [alertController addAction:[UIAlertAction actionWithTitle:@"نسخ" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
             if (detailText) [[UIPasteboard generalPasteboard] setString:detailText];
         }]];
         [self.dataViewController presentViewController:alertController animated:YES completion:nil];
@@ -140,7 +140,7 @@
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     if (section == 0) {
         ADTitleSectionHeaderView *header = [tableView dequeueReusableHeaderFooterViewWithIdentifier:ADTitleSectionHeaderView.reuseIdentifier];
-        [header configureBackHeaderWithTitle:@"MORE INFO"];
+        [header configureBackHeaderWithTitle:@"معلومات إضافية"];
         header.delegate = self;
         return header;
     } else {
@@ -148,15 +148,15 @@
         header.section = section;
         header.delegate = self;
         if (section == 1) {
-            header.titleLabel.text = [NSString stringWithFormat:@"URL SCHEMES (%td)",self.appData.urlSchemes.count];
+            header.titleLabel.text = [NSString stringWithFormat:@"مسارات الروابط (URL SCHEMES) (%td)",self.appData.urlSchemes.count];
         } else if (section == 2) {
-            header.titleLabel.text = [NSString stringWithFormat:@"QUERIES SCHEMES (%td)",self.appData.queriesSchemes.count];
+            header.titleLabel.text = [NSString stringWithFormat:@"الاستعلامات (QUERIES SCHEMES) (%td)",self.appData.queriesSchemes.count];
         } else if (section == 3) {
-            header.titleLabel.text = [NSString stringWithFormat:@"ACTIVITY TYPES (%td)",self.appData.activityTypes.count];
+            header.titleLabel.text = [NSString stringWithFormat:@"أنواع النشاط (ACTIVITY TYPES) (%td)",self.appData.activityTypes.count];
         } else if (section == 4) {
-            header.titleLabel.text = [NSString stringWithFormat:@"BACKGROUND MODES (%td)",self.appData.backgroundModes.count];
+            header.titleLabel.text = [NSString stringWithFormat:@"أوضاع الخلفية (BACKGROUND MODES) (%td)",self.appData.backgroundModes.count];
         } else if (section == 5) {
-            header.titleLabel.text = [NSString stringWithFormat:@"ENTITLEMENTS (%td)",self.appData.entitlementsIdentifiers.count];
+            header.titleLabel.text = [NSString stringWithFormat:@"الصلاحيات (ENTITLEMENTS) (%td)",self.appData.entitlementsIdentifiers.count];
         }
         return header;
     }
@@ -220,7 +220,7 @@
                                                                                         previewProvider:nil
                                                                                          actionProvider:^UIMenu * _Nullable(NSArray<UIMenuElement *> * _Nonnull suggestedActions) {
         NSMutableArray *actions = [NSMutableArray new];
-        [actions addObject:[UIAction actionWithTitle:@"Copy" image:nil identifier:@"copy-action" handler:^(__kindof UIAction * _Nonnull action) {
+        [actions addObject:[UIAction actionWithTitle:@"نسخ" image:nil identifier:@"copy-action" handler:^(__kindof UIAction * _Nonnull action) {
             UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
             if (indexPath.section == 1) {
                 if (cell.detailTextLabel.text) [[UIPasteboard generalPasteboard] setString:cell.detailTextLabel.text];

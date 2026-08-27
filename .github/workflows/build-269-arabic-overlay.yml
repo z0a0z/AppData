@@ -1,0 +1,59 @@
+name: Build AppData 2.6.9 Arabic Overlay
+
+on:
+  push:
+    branches: [ appdata-269-arabic-overlay ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Theos and signing tool
+        run: |
+          brew install ldid
+          sudo git clone --depth 1 --recursive https://github.com/theos/theos.git /opt/theos
+          sudo chmod -R a+rX,u+w /opt/theos
+
+      - name: Validate localization resources
+        run: |
+          plutil -lint AppData269Arabic/ar.plist
+          grep -q 'العربية' AppData269Arabic/Tweak.xm
+          grep -q 'UISemanticContentAttributeForceRightToLeft' AppData269Arabic/Tweak.xm
+          grep -q 'ADLanguage' AppData269Arabic/Tweak.xm
+
+      - name: Build localization overlay
+        env:
+          THEOS: /opt/theos
+        run: |
+          set -euo pipefail
+          cd AppData269Arabic
+          make clean
+          make FINALPACKAGE=1
+          DYLIB="$(find .theos -type f -name 'AppDataArabic.dylib' | head -1)"
+          test -n "$DYLIB" -a -f "$DYLIB"
+          ldid -S "$DYLIB"
+          mkdir -p ../overlay-output
+          cp "$DYLIB" ../overlay-output/AppDataArabic.dylib
+          cp AppDataArabic.plist ../overlay-output/AppDataArabic.plist
+          cp ar.plist ../overlay-output/ar.plist
+
+      - name: Verify overlay
+        run: |
+          set -euo pipefail
+          file overlay-output/AppDataArabic.dylib
+          lipo -info overlay-output/AppDataArabic.dylib
+          otool -L overlay-output/AppDataArabic.dylib
+          test -s overlay-output/AppDataArabic.plist
+          test -s overlay-output/ar.plist
+          echo APPDATA_269_ARABIC_OVERLAY_PASS
+
+      - name: Upload overlay
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppData-2.6.9-Arabic-Overlay
+          path: overlay-output/
+          if-no-files-found: error

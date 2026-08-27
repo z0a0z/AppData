@@ -37,6 +37,11 @@ jobs:
       - name: Compile Xcode Project
         run: |
           export PATH="/opt/theos/bin:/opt/MonkeyDev/bin:$PATH"
+
+          # Regenerate the checked-in Logos output from the authoritative .xm source.
+          /opt/theos/bin/logos.pl AppData/AppData.xm > AppData/AppData.mm.generated
+          mv AppData/AppData.mm.generated AppData/AppData.mm
+
           xcodebuild clean build \
             -project AppData.xcodeproj \
             -alltargets \

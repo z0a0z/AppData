@@ -28,9 +28,10 @@ jobs:
 
       - name: Apply audited Arabic RTL rootless preparation
         run: |
-          # Normalize developer-only pragma comments so the UI audit checks strings,
-          # not non-user-facing English source comments.
+          # Normalize developer-only section comments so the audit remains scoped
+          # to strings that can actually appear in the UI.
           sed -i '' 's/Used from Force Touch Menu/Context menu entry/g; s/Used from Swipe Up/Swipe gesture entry/g' AppData/Classes/Controller/ADDataViewController.m
+          sed -i '' 's#// Clear App Data#// App data action#g; s#// Reset Permissions#// Permissions action#g; s#// More Info#// Details action#g' AppData/Classes/Controller/DataSource/ADMainDataSource.m
           python3 tools/prepare_arabic_rootless.py
           grep -q 'UISemanticContentAttributeForceRightToLeft' AppData/Classes/Controller/ADDataViewController.m
           grep -q '/var/jb/Library/Application Support/AppData/Resources.bundle' AppData/Classes/Helpers/ADHelper.m

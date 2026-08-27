@@ -47,6 +47,7 @@ jobs:
       - name: Compile AppData and Preferences
         run: |
           export PATH="/opt/theos/bin:/opt/MonkeyDev/bin:$PATH"
+          set +e
           xcodebuild clean build \
             -project AppData.xcodeproj \
             -alltargets \
@@ -58,7 +59,23 @@ jobs:
             SYMROOT="$(pwd)/build" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
+            CODE_SIGN_IDENTITY="" \
+            2>&1 | tee xcodebuild.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            echo '===== XCODE FAILURE SUMMARY ====='
+            grep -nE '(^| )error:|fatal error:|Undefined symbols|duplicate symbol|ld: |clang: error|Command .* failed' xcodebuild.log | tail -120 || true
+            echo '===== END XCODE FAILURE SUMMARY ====='
+          fi
+          exit "$status"
+
+      - name: Upload Xcode diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppData-Xcode-Diagnostics
+          path: xcodebuild.log
+          if-no-files-found: error
 
       - name: Locate build products
         run: |
